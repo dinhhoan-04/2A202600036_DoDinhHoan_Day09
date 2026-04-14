@@ -29,9 +29,19 @@ Chạy thử:
 """
 
 import os
+import sys
 import json
+from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Ensure lab root is on sys.path so workers/ imports work regardless of CWD
+_LAB_DIR = Path(__file__).parent
+if str(_LAB_DIR) not in sys.path:
+    sys.path.insert(0, str(_LAB_DIR))
 
 
 # ─────────────────────────────────────────────

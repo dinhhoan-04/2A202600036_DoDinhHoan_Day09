@@ -111,3 +111,4 @@ Tôi sẽ implement Day 08 baseline chạy được để `compare_single_vs_mul
 
 ---
 
+*Lưu file này với tên: `reports/individual/nguyen_cong_thanh.md`*

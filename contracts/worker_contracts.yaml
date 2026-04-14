@@ -97,7 +97,7 @@ retrieval_worker:
     - "Stateless: không đọc hoặc ghi state ngoài những gì được khai báo ở trên"
   actual_implementation:
     status: "done"
-    notes: "Dense retrieval voi ChromaDB + sentence-transformers. Model cached tai module level (_MODEL_CACHE) de tranh reload. Fallback: return [] neu ChromaDB chua co data."
+    notes: "Implemented dense retrieval via ChromaDB (all-MiniLM-L6-v2). Falls back to empty list if ChromaDB unavailable. Worker is stateless."
 
 # ─────────────────────────────────────────────
 # Policy Tool Worker
@@ -167,7 +167,7 @@ policy_tool_worker:
     - "Không được tự bịa policy rules không có trong tài liệu"
   actual_implementation:
     status: "done"
-    notes: "Rule-based exception detection (flash_sale, digital_product, activated). MCP integration: check_access_permission, get_ticket_info, search_kb. False positive fix: only detect flash_sale from task_lower, not context_text."
+    notes: "Implemented rule-based exception detection (flash_sale, digital_product, activated). Calls MCP search_kb if no chunks. Calls MCP get_ticket_info for P1/ticket queries."
 
 # ─────────────────────────────────────────────
 # Synthesis Worker
@@ -215,7 +215,7 @@ synthesis_worker:
     - "Không được dùng kiến thức ngoài context được cung cấp"
   actual_implementation:
     status: "done"
-    notes: "LLM caller chain: Anthropic claude-haiku-4-5 -> OpenAI gpt-4o-mini -> Gemini 1.5-flash -> extractive fallback. Extractive: filters header chunks, adds [source] citation, estimates confidence from chunk scores."
+    notes: "Calls OpenAI gpt-4o-mini (fallback Gemini). Grounded prompt with SYSTEM_PROMPT. Confidence estimated from chunk scores. Abstains if no evidence."
 
 # ─────────────────────────────────────────────
 # MCP Server
@@ -271,4 +271,4 @@ mcp_server:
     - "Không được raise exception ra ngoài dispatch_tool()"
   actual_implementation:
     status: "done"
-    notes: "4 tools implemented: search_kb (delegates to retrieval.retrieve_dense), get_ticket_info (mock JIRA data), check_access_permission (access rules Level 1-3), create_ticket (mock). dispatch_tool() catches all exceptions, never raises."
+    notes: "Mock MCP server implemented in Python. 4 tools: search_kb (ChromaDB), get_ticket_info (mock DB), check_access_permission (rule-based), create_ticket (mock). dispatch_tool() never raises exceptions — returns error dict on failure."

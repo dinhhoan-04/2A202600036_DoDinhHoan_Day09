@@ -19,6 +19,7 @@ import os
 import sys
 import argparse
 from datetime import datetime
+from typing import Optional
 
 # Import graph
 sys.path.insert(0, os.path.dirname(__file__))
@@ -29,7 +30,7 @@ from graph import run_graph, save_trace
 # 1. Run Pipeline on Test Questions
 # ─────────────────────────────────────────────
 
-def run_test_questions(questions_file: str = "data/grading_questions.json") -> list:
+def run_test_questions(questions_file: str = "data/test_questions.json") -> list:
     """
     Chạy pipeline với danh sách câu hỏi, lưu trace từng câu.
 
@@ -179,12 +180,12 @@ def analyze_traces(traces_dir: str = "artifacts/traces") -> dict:
 
     trace_files = [f for f in os.listdir(traces_dir) if f.endswith(".json")]
     if not trace_files:
-        print(f"No trace files in {traces_dir}.")
+        print(f"⚠️  Không có trace files trong {traces_dir}.")
         return {}
 
     traces = []
     for fname in trace_files:
-        with open(os.path.join(traces_dir, fname), encoding="utf-8") as f:
+        with open(os.path.join(traces_dir, fname)) as f:
             traces.append(json.load(f))
 
     # Compute metrics
@@ -236,80 +237,42 @@ def analyze_traces(traces_dir: str = "artifacts/traces") -> dict:
 
 def compare_single_vs_multi(
     multi_traces_dir: str = "artifacts/traces",
-    day08_results_file: str = "artifacts/day08_baseline.json",
+    day08_results_file: Optional[str] = None,
 ) -> dict:
     """
     So sánh Day 08 (single agent RAG) vs Day 09 (multi-agent).
 
-    Day 08 baseline được sinh bởi single_agent_rag.py.
-    Nếu chưa có file, chạy trước: python single_agent_rag.py
+    TODO Sprint 4: Điền kết quả thực tế từ Day 08 vào day08_baseline.
 
     Returns:
         dict của comparison metrics
     """
     multi_metrics = analyze_traces(multi_traces_dir)
 
-    if not os.path.exists(day08_results_file):
-        print(f"⚠️  {day08_results_file} chưa có.")
-        print("   Chạy trước: python single_agent_rag.py")
-        day08_baseline = {
-            "agent_type": "single_agent_rag",
-            "total_questions": "N/A",
-            "avg_confidence": "N/A",
-            "avg_latency_ms": "N/A",
-            "abstain_rate": "N/A",
-            "multi_hop_accuracy": "N/A",
-            "mcp_usage_rate": "0/15 (0%)",
-            "hitl_rate": "0/15 (0%)",
-        }
-    else:
-        with open(day08_results_file, encoding="utf-8") as f:
-            day08_baseline = json.load(f)
-        print(f"✓ Loaded Day 08 baseline: {day08_results_file}")
+    # TODO: Load Day 08 results nếu có
+    # Nếu không có, dùng baseline giả lập để format
+    day08_baseline = {
+        "total_questions": 15,
+        "avg_confidence": 0.0,          # TODO: Điền từ Day 08 eval.py
+        "avg_latency_ms": 0,            # TODO: Điền từ Day 08
+        "abstain_rate": "?",            # TODO: Điền từ Day 08
+        "multi_hop_accuracy": "?",      # TODO: Điền từ Day 08
+    }
 
-    def _fmt_delta(d09, d08, higher_is_better: bool = True) -> str:
-        try:
-            d = round(float(d09) - float(d08), 3)
-            arrow = ("▲" if d > 0 else "▼") if higher_is_better else ("▼" if d > 0 else "▲")
-            return f"{arrow} {abs(d):+.3f}  (Day08={d08} → Day09={d09})"
-        except (TypeError, ValueError):
-            return f"Day08={d08} | Day09={d09}"
+    if day08_results_file and os.path.exists(day08_results_file):
+        with open(day08_results_file) as f:
+            day08_baseline = json.load(f)
 
     comparison = {
         "generated_at": datetime.now().isoformat(),
         "day08_single_agent": day08_baseline,
         "day09_multi_agent": multi_metrics,
         "analysis": {
-            "confidence_delta": _fmt_delta(
-                multi_metrics.get("avg_confidence", 0),
-                day08_baseline.get("avg_confidence", 0),
-                higher_is_better=True,
-            ),
-            "latency_delta": _fmt_delta(
-                multi_metrics.get("avg_latency_ms", 0),
-                day08_baseline.get("avg_latency_ms", 0),
-                higher_is_better=False,
-            ),
-            "multi_hop_accuracy": (
-                f"Day08: {day08_baseline.get('multi_hop_accuracy', 'N/A')} | "
-                f"Day09: xem supervisor_route trong traces (cross-doc queries → policy_tool_worker)"
-            ),
-            "routing_visibility": (
-                "Day09: mỗi câu có supervisor_route + route_reason → explainable. "
-                "Day08: tất cả đi thẳng retrieval, không có routing."
-            ),
-            "mcp_tools": (
-                f"Day08: 0 MCP calls. "
-                f"Day09: {multi_metrics.get('mcp_usage_rate', '?')} câu dùng MCP tools."
-            ),
-            "hitl": (
-                f"Day08: không có HITL. "
-                f"Day09: {multi_metrics.get('hitl_rate', '?')} câu trigger human review."
-            ),
-            "debuggability": (
-                "Day09: test từng worker độc lập được, trace đầy đủ workers_called + mcp_tools_used. "
-                "Day08: monolithic, khó isolate lỗi."
-            ),
+            "routing_visibility": "Day 09 có route_reason cho từng câu → dễ debug hơn Day 08",
+            "latency_delta": "TODO: Điền delta latency thực tế",
+            "accuracy_delta": "TODO: Điền delta accuracy thực tế từ grading",
+            "debuggability": "Multi-agent: có thể test từng worker độc lập. Single-agent: không thể.",
+            "mcp_benefit": "Day 09 có thể extend capability qua MCP không cần sửa core. Day 08 phải hard-code.",
         },
     }
 
@@ -364,7 +327,7 @@ if __name__ == "__main__":
         log_file = run_grading_questions()
         if log_file:
             print(f"\n✅ Grading log: {log_file}")
-   
+            print("   Nộp file này trước 18:00!")
 
     elif args.analyze:
         # Phân tích traces

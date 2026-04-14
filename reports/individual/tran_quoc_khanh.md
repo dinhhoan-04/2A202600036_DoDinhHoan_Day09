@@ -112,3 +112,4 @@ Tôi sẽ upgrade `analyze_policy()` để gọi LLM cho các edge cases không 
 
 ---
 
+*Lưu file này với tên: `reports/individual/tran_quoc_khanh.md`*

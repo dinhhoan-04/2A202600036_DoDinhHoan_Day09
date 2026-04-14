@@ -104,3 +104,4 @@ Tôi sẽ thêm LLM-as-Judge cho `_estimate_confidence()` — gọi thêm một 
 
 ---
 
+*Lưu file này với tên: `reports/individual/do_dinh_hoan.md`*

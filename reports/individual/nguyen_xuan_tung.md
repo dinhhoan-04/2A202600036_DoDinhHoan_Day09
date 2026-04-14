@@ -120,3 +120,4 @@ Tôi sẽ thay thế keyword matching bằng LLM intent classifier nhỏ (Haiku,
 
 ---
 
+*Lưu file này với tên: `reports/individual/nguyen_xuan_tung.md`*

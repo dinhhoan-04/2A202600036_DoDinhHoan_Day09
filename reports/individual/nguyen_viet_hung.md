@@ -104,3 +104,4 @@ Tôi sẽ thêm hybrid retrieval (dense + BM25 sparse) trong `retrieve_dense()`.
 
 ---
 
+*Lưu file này với tên: `reports/individual/nguyen_viet_hung.md`*
